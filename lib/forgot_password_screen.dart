@@ -13,7 +13,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   Future<void> _submitForgotPassword() async {
     final response = await http.post(
-      Uri.parse('http://localhost:3000/api/auth/forgot-password'),
+      Uri.parse('http://localhost:3000/api/auth/request-password-reset'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'email': _emailController.text}),
     );

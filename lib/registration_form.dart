@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
-
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:onehive_frontend/login_form.dart';
-
-
-
 
 class RegistrationForm extends StatefulWidget {
   @override
@@ -13,38 +9,31 @@ class RegistrationForm extends StatefulWidget {
 }
 
 class _RegistrationFormState extends State<RegistrationForm> {
-  // Controllers for form fields
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
-  final TextEditingController _phoneNumberController = TextEditingController();
 
-  String _userRole = 'Client';  // Default value for dropdown
-  String? _selectedCity;        // Default value for city dropdown
-  bool _termsAccepted = false;  // For Terms and Conditions
+  String _userRole = 'Client';
+  String? _selectedCity;
+  bool _termsAccepted = false;
 
-  // List of cities/provinces in Nepal
   final List<String> _cities = [
     'Kathmandu', 'Pokhara', 'Lalitpur', 'Bhaktapur', 'Biratnagar', 'Chitwan'
   ];
 
-  // Function to validate and submit the form
   void _submitForm() async {
     if (_formKey.currentState!.validate()) {
       if (_termsAccepted) {
-        // Prepare data to send
         final registrationData = {
-          'full_name': _fullNameController.text,
+          'username': _fullNameController.text,
           'email': _emailController.text,
           'password': _passwordController.text,
-          'phone_number': _phoneNumberController.text,
           'role': _userRole,
           'city': _selectedCity,
         };
 
-        // Send POST request
         final response = await http.post(
           Uri.parse('http://localhost:3000/api/auth/register'),
           headers: {'Content-Type': 'application/json'},
@@ -52,14 +41,12 @@ class _RegistrationFormState extends State<RegistrationForm> {
         );
 
         if (response.statusCode == 201) {
-          // Registration successful
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Registration Successful')));
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const LoginForm()),
           );
         } else {
-          // Show error message
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Registration Failed: ${response.body}')));
         }
       } else {
@@ -72,137 +59,202 @@ class _RegistrationFormState extends State<RegistrationForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("OneHive Registration"),
+        title: const Text("OneHive Registration"),
+        backgroundColor: Colors.orangeAccent,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: <Widget>[
-              // Full Name
-              TextFormField(
-                controller: _fullNameController,
-                decoration: InputDecoration(labelText: 'Full Name'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your full name';
-                  }
-                  return null;
-                },
-              ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Join OneHive!',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.orange),
+                ),
+                SizedBox(height: 15),
+                Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      // Full Name
+                      TextFormField(
+                        controller: _fullNameController,
+                        decoration: InputDecoration(
+                          labelText: 'Username',
+                          hintText: 'Enter your user name',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your full name';
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(height: 20),
 
-              // Email Address
-              TextFormField(
-                controller: _emailController,
-                decoration: InputDecoration(labelText: 'Email Address'),
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) {
-                  if (value == null || value.isEmpty || !value.contains('@')) {
-                    return 'Please enter a valid email';
-                  }
-                  return null;
-                },
-              ),
+                      // Email Address
+                      TextFormField(
+                        controller: _emailController,
+                        decoration: InputDecoration(
+                          labelText: 'Email',
+                          hintText: 'Enter your email',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty || !value.contains('@')) {
+                            return 'Please enter a valid email';
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(height: 20),
 
-              // Password
-              TextFormField(
-                controller: _passwordController,
-                decoration: InputDecoration(labelText: 'Password'),
-                obscureText: true,
-                validator: (value) {
-                  if (value == null || value.length < 6) {
-                    return 'Password must be at least 6 characters';
-                  }
-                  return null;
-                },
-              ),
+                      // Password
+                      TextFormField(
+                        controller: _passwordController,
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          hintText: 'Enter your password',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        obscureText: true,
+                        validator: (value) {
+                          if (value == null || value.length < 6) {
+                            return 'Password must be at least 6 characters';
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(height: 20),
 
-              // Confirm Password
-              TextFormField(
-                controller: _confirmPasswordController,
-                decoration: InputDecoration(labelText: 'Confirm Password'),
-                obscureText: true,
-                validator: (value) {
-                  if (value != _passwordController.text) {
-                    return 'Passwords do not match';
-                  }
-                  return null;
-                },
-              ),
+                      // Confirm Password
+                      TextFormField(
+                        controller: _confirmPasswordController,
+                        decoration: InputDecoration(
+                          labelText: 'Confirm Password',
+                          hintText: 'Confirm your password',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        obscureText: true,
+                        validator: (value) {
+                          if (value != _passwordController.text) {
+                            return 'Passwords do not match';
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(height: 20),
 
-              // Phone Number (Optional)
-              TextFormField(
-                controller: _phoneNumberController,
-                decoration: InputDecoration(labelText: 'Phone Number (Optional)'),
-                keyboardType: TextInputType.phone,
-              ),
+                      // User Role (Client or Freelancer)
+                      DropdownButtonFormField<String>(
+                        value: _userRole,
+                        decoration: InputDecoration(
+                          labelText: 'User Role',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        items: ['Client', 'Freelancer'].map((String role) {
+                          return DropdownMenuItem<String>(
+                            value: role,
+                            child: Text(role),
+                          );
+                        }).toList(),
+                        onChanged: (newValue) {
+                          setState(() {
+                            _userRole = newValue!;
+                          });
+                        },
+                      ),
+                      SizedBox(height: 20),
 
-              // User Role (Client or Freelancer)
-              DropdownButtonFormField<String>(
-                value: _userRole,
-                decoration: InputDecoration(labelText: 'User Role'),
-                items: ['Client', 'Freelancer'].map((String role) {
-                  return DropdownMenuItem<String>(
-                    value: role,
-                    child: Text(role),
-                  );
-                }).toList(),
-                onChanged: (newValue) {
-                  setState(() {
-                    _userRole = newValue!;
-                  });
-                },
-              ),
+                      // City/Province Dropdown
+                      DropdownButtonFormField<String>(
+                        value: _selectedCity,
+                        decoration: InputDecoration(
+                          labelText: 'City/Province',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        items: _cities.map((String city) {
+                          return DropdownMenuItem<String>(
+                            value: city,
+                            child: Text(city),
+                          );
+                        }).toList(),
+                        onChanged: (newValue) {
+                          setState(() {
+                            _selectedCity = newValue!;
+                          });
+                        },
+                        validator: (value) {
+                          if (value == null) {
+                            return 'Please select a city or province';
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(height: 15),
 
-              // City/Province Dropdown
-              DropdownButtonFormField<String>(
-                value: _selectedCity,
-                decoration: InputDecoration(labelText: 'City/Province'),
-                items: _cities.map((String city) {
-                  return DropdownMenuItem<String>(
-                    value: city,
-                    child: Text(city),
-                  );
-                }).toList(),
-                onChanged: (newValue) {
-                  setState(() {
-                    _selectedCity = newValue!;
-                  });
-                },
-                validator: (value) {
-                  if (value == null) {
-                    return 'Please select a city or province';
-                  }
-                  return null;
-                },
-              ),
+                      // Terms and Conditions Checkbox
+                      CheckboxListTile(
+                        title: Text("I accept the Terms and Conditions"),
+                        value: _termsAccepted,
+                        onChanged: (newValue) {
+                          setState(() {
+                            _termsAccepted = newValue!;
+                          });
+                        },
+                      ),
+                      SizedBox(height: 15),
 
-              // Terms and Conditions Checkbox
-              CheckboxListTile(
-                title: Text("I accept the Terms and Conditions"),
-                value: _termsAccepted,
-                onChanged: (newValue) {
-                  setState(() {
-                    _termsAccepted = newValue!;
-                  });
-                },
-              ),
+                      // Register Button
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          backgroundColor: Colors.orangeAccent,
+                        ),
+                        onPressed: _submitForm,
+                        child: Text(
+                          'Register',
+                          style: TextStyle(fontSize: 18, color: Colors.white),
+                        ),
+                      ),
+                      SizedBox(height: 15),
 
-              // Submit Button
-              ElevatedButton(
-                onPressed: _submitForm,
-                child: Text('Register'),
-              ),
-
-              TextButton(
-                onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => LoginForm()));
-                },
-                child: const Text("Already have an account? Login here"),
-              ),
-            ],
-          ),
+                      // Navigate to Login
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => LoginForm()));
+                        },
+                        child: Text(
+                          "Already have an account? Login here",
+                          style: TextStyle(color: Colors.orange),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

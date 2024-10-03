@@ -3,37 +3,68 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class ResetPasswordScreen extends StatefulWidget {
-  final String token;
-  final String email;
+  final String resetToken;
 
-  ResetPasswordScreen({required this.token, required this.email});
+  ResetPasswordScreen({required this.resetToken});
 
   @override
   _ResetPasswordScreenState createState() => _ResetPasswordScreenState();
 }
 
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
-  final TextEditingController _passwordController = TextEditingController();
-  String _message = '';
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  bool _isLoading = false;
 
   Future<void> _resetPassword() async {
-    final response = await http.post(
-      Uri.parse('http://localhost:3000/reset-password'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'token': widget.token,
-        'email': widget.email,
-        'password': _passwordController.text,
-      }),
-    );
+    final password = _passwordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
 
-    if (response.statusCode == 200) {
+    if (password.isEmpty || confirmPassword.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Please fill in both password fields')),
+      );
+      return;
+    }
+
+    if (password != confirmPassword) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Passwords do not match')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://localhost:3000/api/auth/reset-password'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'reset_token': widget.resetToken,
+          'new_password': password,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Password reset successful')),
+        );
+        Navigator.pop(context); // Go back to login screen
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to reset password')),
+        );
+      }
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('An error occurred: $error')),
+      );
+    } finally {
       setState(() {
-        _message = 'Password reset successful.';
-      });
-    } else {
-      setState(() {
-        _message = 'Error: ${jsonDecode(response.body)['message']}';
+        _isLoading = false;
       });
     }
   }
@@ -41,23 +72,32 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Reset Password')),
+      appBar: AppBar(
+        title: Text('Reset Password'),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             TextField(
               controller: _passwordController,
-              decoration: InputDecoration(labelText: 'Enter new password'),
               obscureText: true,
+              decoration: InputDecoration(labelText: 'New Password'),
+            ),
+            SizedBox(height: 10),
+            TextField(
+              controller: _confirmPasswordController,
+              obscureText: true,
+              decoration: InputDecoration(labelText: 'Confirm Password'),
             ),
             SizedBox(height: 20),
-            ElevatedButton(
+            _isLoading
+                ? Center(child: CircularProgressIndicator())
+                : ElevatedButton(
               onPressed: _resetPassword,
-              child: Text('Submit'),
+              child: Text('Reset Password'),
             ),
-            SizedBox(height: 20),
-            Text(_message),
           ],
         ),
       ),
